@@ -1,16 +1,17 @@
 # Service definition
-name: ChangeThisRepoName
-description: template-GoModule
+name: transceiver
+description: Replicates the controller mechanism by using remote control input
 
-# No dependencies
+# No dependencies at start
 dependencies: []
 
-# No outputs (You'll probably want to update this or `dependencies`)
-outputs: []
+# No outputs
+outputs: 
+  - name: decision
+    address: tcp://localhost:5556
 
-# Runtime options
 options:
-  - name: example_option
-    type: int     # Can be int, float, string, bool
-    mutable: true # Can be changed at runtime
-    default: 1    # Default value
+ - name: forwardingserver-address
+   type: string
+   mutable: false
+   default: http://localhost:7500 # Change this to the IP address that of the forwarding server
