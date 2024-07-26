@@ -3,8 +3,8 @@ package serverconnection
 import (
 	"vu/ase/transceiver/src/state"
 
-	pb_module_outputs "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/outputs"
-	pb_systemmanager_messages "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/systemmanager"
+	pb_core_messages "github.com/VU-ASE/rovercom/packages/go/core"
+	pb_module_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
 	"github.com/pion/webrtc/v4"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
@@ -51,7 +51,7 @@ func registerControlDatachannel(dc *webrtc.DataChannel, processState *state.Proc
 		}
 
 		// the data could also be a tuning state update, try to parse it
-		sysmanMsg := pb_systemmanager_messages.SystemManagerMessage{}
+		sysmanMsg := pb_core_messages.CoreMessage{}
 		err = proto.Unmarshal(msg.Data, &sysmanMsg)
 		if err != nil {
 			log.Warn().Err(err).Msg("Could not parse control message")

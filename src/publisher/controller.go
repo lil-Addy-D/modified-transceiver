@@ -1,7 +1,7 @@
 package publisher
 
 import (
-	pb_module_outputs "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/outputs"
+	pb_module_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
 
 	zmq "github.com/pebbe/zmq4"
 	"github.com/rs/zerolog/log"

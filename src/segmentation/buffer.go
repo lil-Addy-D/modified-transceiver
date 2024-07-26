@@ -1,7 +1,7 @@
 package segmentation
 
 import (
-	pb_segmentation "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/segmentation"
+	pb_segmentation "github.com/VU-ASE/rovercom/packages/go/segmentation"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 )

@@ -9,18 +9,18 @@ import (
 	"vu/ase/transceiver/src/state"
 	"vu/ase/transceiver/src/stream"
 
-	pb_module_outputs "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/outputs"
-	pb_systemmanager_messages "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/systemmanager"
+	pb_core_messages "github.com/VU-ASE/rovercom/packages/go/core"
+	pb_module_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
 
 	"github.com/rs/zerolog/log"
 
-	servicerunner "github.com/VU-ASE/pkg-ServiceRunner/v2/src"
+	roverlib "github.com/VU-ASE/roverlib/src"
 )
 
 // The actual program
-func run(service servicerunner.ResolvedService, sysmanInfo servicerunner.SystemManagerInfo, tuningState *pb_systemmanager_messages.TuningState) error {
+func run(service roverlib.ResolvedService, sysmanInfo roverlib.SystemManagerInfo, tuningState *pb_core_messages.TuningState) error {
 	// Get server address from service.yaml
-	serverAddr, err := servicerunner.GetTuningString("forwardingserver-address", tuningState)
+	serverAddr, err := roverlib.GetTuningString("forwardingserver-address", tuningState)
 	if err != nil {
 		return fmt.Errorf("Could not fetch forwarding server address: %v", err)
 	}
@@ -61,7 +61,7 @@ func run(service servicerunner.ResolvedService, sysmanInfo servicerunner.SystemM
 	return nil
 }
 
-func onTuningState(tuningState *pb_systemmanager_messages.TuningState) {
+func onTuningState(tuningState *pb_core_messages.TuningState) {
 	// do nothing for now
 }
 
@@ -71,5 +71,5 @@ func onTerminate(sig os.Signal) {
 
 // Used to start the program with the correct arguments
 func main() {
-	servicerunner.Run(run, onTuningState, onTerminate, false)
+	roverlib.Run(run, onTuningState, onTerminate, false)
 }

@@ -10,7 +10,7 @@ import (
 	livestreamconfig "vu/ase/transceiver/src/config"
 	"vu/ase/transceiver/src/state"
 
-	rtc "github.com/VU-ASE/pkg-Rtc/src"
+	rtc "github.com/VU-ASE/roverrtc/src"
 
 	"github.com/pion/webrtc/v4"
 	"github.com/rs/zerolog/log"

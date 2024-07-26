@@ -4,10 +4,10 @@ import (
 	"os"
 	"vu/ase/transceiver/src/publisher"
 
-	pb_module_outputs "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/outputs"
-	pb_systemmanager_messages "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/systemmanager"
-	rtc "github.com/VU-ASE/pkg-Rtc/src"
-	servicerunner "github.com/VU-ASE/pkg-ServiceRunner/v2/src"
+	pb_core_messages "github.com/VU-ASE/rovercom/packages/go/core"
+	pb_module_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
+	servicerunner "github.com/VU-ASE/roverlib/src"
+	rtc "github.com/VU-ASE/roverrtc/src"
 	"github.com/pion/webrtc/v4"
 
 	"github.com/rs/zerolog/log"
@@ -37,12 +37,12 @@ func onControllerData(controllerData *pb_module_outputs.ControllerOutput, publis
 }
 
 // If a tuning state change came in from the server
-func onTuningStateUpdate(tuningState *pb_systemmanager_messages.TuningState) {
+func onTuningStateUpdate(tuningState *pb_core_messages.TuningState) {
 	log.Debug().Str("newState", tuningState.String()).Msg("Tuning state changed")
 
 	// Send the tuning state to the system manager, which will broadcast it to all modules
-	message := pb_systemmanager_messages.SystemManagerMessage{
-		Msg: &pb_systemmanager_messages.SystemManagerMessage_TuningState{
+	message := pb_core_messages.CoreMessage{
+		Msg: &pb_core_messages.CoreMessage_TuningState{
 			TuningState: tuningState,
 		},
 	}

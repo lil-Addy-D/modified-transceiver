@@ -9,9 +9,9 @@ import (
 	"time"
 	"vu/ase/transceiver/src/segmentation"
 
-	pb_systemmanager_messages "github.com/VU-ASE/pkg-CommunicationDefinitions/v2/packages/go/systemmanager"
-	rtc "github.com/VU-ASE/pkg-Rtc/src"
-	servicerunner "github.com/VU-ASE/pkg-ServiceRunner/v2/src"
+	pb_core_messages "github.com/VU-ASE/rovercom/packages/go/core"
+	servicerunner "github.com/VU-ASE/roverlib/src"
+	rtc "github.com/VU-ASE/roverrtc/src"
 	zmq "github.com/pebbe/zmq4"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
@@ -28,14 +28,14 @@ type StreamState struct {
 
 type StreamStateService struct {
 	// The service that is being streamed
-	serviceIdentifier *pb_systemmanager_messages.ServiceIdentifier
+	serviceIdentifier *pb_core_messages.ServiceIdentifier
 	// The endpoints that are being streamed
 	endpoints []StreamStateServiceEndpoint
 }
 
 type StreamStateServiceEndpoint struct {
 	// The endpoint that is being streamed
-	endpoint *pb_systemmanager_messages.ServiceEndpoint
+	endpoint *pb_core_messages.ServiceEndpoint
 	// The ZMQ socket that is used to receive data from the endpoint
 	socket *zmq.Socket
 }
@@ -48,7 +48,7 @@ func NewStreamState() *StreamState {
 	}
 }
 
-func NewStreamStateService(service *pb_systemmanager_messages.Service) (*StreamStateService, error) {
+func NewStreamStateService(service *pb_core_messages.Service) (*StreamStateService, error) {
 	if service == nil {
 		return nil, fmt.Errorf("ServiceIdentifier cannot be nil")
 	}
@@ -74,7 +74,7 @@ func NewStreamStateService(service *pb_systemmanager_messages.Service) (*StreamS
 	}, nil
 }
 
-func NewStreamStateServiceEndpoint(endpoint *pb_systemmanager_messages.ServiceEndpoint) (*StreamStateServiceEndpoint, error) {
+func NewStreamStateServiceEndpoint(endpoint *pb_core_messages.ServiceEndpoint) (*StreamStateServiceEndpoint, error) {
 	if endpoint == nil {
 		return nil, fmt.Errorf("Endpoints cannot be nil")
 	}
@@ -109,7 +109,7 @@ func (s *StreamState) Destroy() {
 	s.destroyed = true
 }
 
-func (s *StreamState) SetServices(newServices *pb_systemmanager_messages.ServiceList) {
+func (s *StreamState) SetServices(newServices *pb_core_messages.ServiceList) {
 	s.servicesLock.Lock()
 	defer s.servicesLock.Unlock()
 
@@ -253,8 +253,8 @@ func Stream(server *rtc.RTC, service servicerunner.ResolvedService, sysmanInfo s
 				state.SetServices(services)
 				_ = atomic.AddInt64(&packetId, 1) // because the packetId is also updated in the main loop
 				// Send the new services to the server
-				msg := &pb_systemmanager_messages.SystemManagerMessage{
-					Msg: &pb_systemmanager_messages.SystemManagerMessage_ServiceList{
+				msg := &pb_core_messages.CoreMessage{
+					Msg: &pb_core_messages.CoreMessage_ServiceList{
 						ServiceList: services,
 					},
 				}
@@ -281,8 +281,8 @@ func Stream(server *rtc.RTC, service servicerunner.ResolvedService, sysmanInfo s
 				log.Debug().Msgf("Fetched tuning state with %d parameters", len(tuning.DynamicParameters))
 				_ = atomic.AddInt64(&packetId, 1) // because the packetId is also updated in the main loop
 				// Send the new services to the server
-				msg := &pb_systemmanager_messages.SystemManagerMessage{
-					Msg: &pb_systemmanager_messages.SystemManagerMessage_TuningState{
+				msg := &pb_core_messages.CoreMessage{
+					Msg: &pb_core_messages.CoreMessage_TuningState{
 						TuningState: tuning,
 					},
 				}
@@ -319,7 +319,7 @@ func Stream(server *rtc.RTC, service servicerunner.ResolvedService, sysmanInfo s
 			}
 
 			// Wrap the bytes into the debug protobuf message, so that the attached debugger (WebController) knows which service sent the message
-			wrappedMsg := &pb_systemmanager_messages.DebugServiceMessage{
+			wrappedMsg := &pb_core_messages.DebugServiceMessage{
 				Service:  service.serviceIdentifier,
 				Endpoint: endpoint.endpoint,
 				Message:  endpointMsg,
