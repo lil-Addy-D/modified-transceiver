@@ -18,7 +18,7 @@ import (
 )
 
 // The actual program
-func run(service roverlib.ResolvedService, sysmanInfo roverlib.SystemManagerInfo, tuningState *pb_core_messages.TuningState) error {
+func run(service roverlib.ResolvedService, sysmanInfo roverlib.CoreInfo, tuningState *pb_core_messages.TuningState) error {
 	// Get server address from service.yaml
 	serverAddr, err := roverlib.GetTuningString("forwardingserver-address", tuningState)
 	if err != nil {

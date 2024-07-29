@@ -50,7 +50,7 @@ func NewStreamState() *StreamState {
 
 func NewStreamStateService(service *pb_core_messages.Service) (*StreamStateService, error) {
 	if service == nil {
-		return nil, fmt.Errorf("ServiceIdentifier cannot be nil")
+		return nil, fmt.Errorf("serviceIdentifier cannot be nil")
 	}
 
 	// Create the endpoints
@@ -76,14 +76,14 @@ func NewStreamStateService(service *pb_core_messages.Service) (*StreamStateServi
 
 func NewStreamStateServiceEndpoint(endpoint *pb_core_messages.ServiceEndpoint) (*StreamStateServiceEndpoint, error) {
 	if endpoint == nil {
-		return nil, fmt.Errorf("Endpoints cannot be nil")
+		return nil, fmt.Errorf("endpoints cannot be nil")
 	}
 
 	// Create ZMQ receiver for imaging data (sub)
 	sock, err := zmq.NewSocket(zmq.SUB)
 	if err != nil {
 		log.Err(err).Msg("Could not create ZMQ socket")
-		return nil, fmt.Errorf("Could not create ZMQ socket: %v", err)
+		return nil, fmt.Errorf("could not create ZMQ socket: %v", err)
 	}
 	realAddr := strings.ReplaceAll(endpoint.Address, "*", "localhost")
 
@@ -92,11 +92,11 @@ func NewStreamStateServiceEndpoint(endpoint *pb_core_messages.ServiceEndpoint) (
 
 	log.Debug().Str("address", endpoint.Address).Msg("Connected to service output")
 	if err != nil {
-		return nil, fmt.Errorf("Could not connect to imaging output: %v", err)
+		return nil, fmt.Errorf("could not connect to imaging output: %v", err)
 	}
 	err = sock.SetSubscribe("")
 	if err != nil {
-		return nil, fmt.Errorf("Could not subscribe to imaging output: %v", err)
+		return nil, fmt.Errorf("could not subscribe to imaging output: %v", err)
 	}
 
 	return &StreamStateServiceEndpoint{
@@ -220,7 +220,7 @@ func (s *StreamState) ForEachEndpoint(
 	}
 }
 
-func Stream(server *rtc.RTC, service servicerunner.ResolvedService, sysmanInfo servicerunner.SystemManagerInfo) error {
+func Stream(server *rtc.RTC, service servicerunner.ResolvedService, sysmanInfo servicerunner.CoreInfo) error {
 	// Create state that can be accessed by the main stream loop and the goroutine responsible for fetching the services
 	state := NewStreamState()
 	defer state.Destroy()
@@ -229,7 +229,7 @@ func Stream(server *rtc.RTC, service servicerunner.ResolvedService, sysmanInfo s
 	log.Info().Msg("Fetching initial services to stream from")
 	services, err := sysmanInfo.GetAllServices()
 	if err != nil {
-		return fmt.Errorf("Could not get initial services: %v", err)
+		return fmt.Errorf("could not get initial services: %v", err)
 	}
 	log.Info().Msgf("Fetched %d initial services to stream from", len(services.Services))
 	state.SetServices(services)

@@ -46,7 +46,7 @@ func onTuningStateUpdate(tuningState *pb_core_messages.TuningState) {
 			TuningState: tuningState,
 		},
 	}
-	_, err := servicerunner.SendRequestToSystemManager(&message)
+	_, err := servicerunner.SendRequestToCore(&message)
 	if err != nil {
 		log.Err(err).Msg("Error sending tuning state to system manager")
 	}
