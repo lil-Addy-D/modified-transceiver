@@ -16,12 +16,11 @@ const (
 	CarId = "car"
 
 	// Used to identify the different data channels
-	MetaChannelLabel    = "meta"
+	DataChannelLabel    = "data"
 	ControlChannelLabel = "control"
-	FrameChannelLabel   = "frame"
 )
 
-var ServerAddres = fmt.Sprintf("%s://%s:%d", ServerScheme, ServerHost, ServerPort)
+var ServerAddress = fmt.Sprintf("%s://%s:%d", ServerScheme, ServerHost, ServerPort)
 
 // By commenting out the ICE server, communication over LAN is possible
 var PeerConnectionConfig = webrtc.Configuration{

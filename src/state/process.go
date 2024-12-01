@@ -1,8 +1,8 @@
 package state
 
-import "vu/ase/transceiver/src/publisher"
+import roverlib "github.com/VU-ASE/roverlib-go/src"
 
-// This is state that can be easily shared with functions that need it
-type ProcessState struct {
-	ControllerPublisherQueue publisher.ControllerQueue
+// Maintain the state of our current app/process, so that it can be passed around easily
+type AppState struct {
+	TuningOutputStream *roverlib.ServiceStream
 }

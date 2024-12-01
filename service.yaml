@@ -1,17 +1,18 @@
-# Service definition
+# Service identity
 name: transceiver
-description: Replicates the controller mechanism by using remote control input
+author: vu-ase
+source: https://github.com/VU-ASE/transceiver
+version: 1.0.0
 
-# No dependencies at start
-dependencies: []
+commands:
+  build: make build 
+  run: ./bin/transceiver
 
-# No outputs
-outputs: 
-  - name: decision
-    address: tcp://localhost:5556
+# No 'official' dependencies, but the transceiver listens to all streams from all services
+inputs: []
+outputs:
+  - tuning # outputs all tuning messages received from the passthrough service, so that other services can listen and use them
 
-options:
- - name: forwardingserver-address
-   type: string
-   mutable: false
-   default: http://localhost:7500 # Change this to the IP address that of the forwarding server
+configuration:
+  - name: passthrough-address # address of the passthrough service
+    value: localhost:8080

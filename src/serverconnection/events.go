@@ -2,18 +2,17 @@ package serverconnection
 
 import (
 	"os"
-	"vu/ase/transceiver/src/publisher"
+	"vu/ase/transceiver/src/state"
 
-	pb_core_messages "github.com/VU-ASE/rovercom/packages/go/core"
-	pb_module_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
-	servicerunner "github.com/VU-ASE/roverlib/src"
+	pb_tuning "github.com/VU-ASE/rovercom/packages/go/tuning"
 	rtc "github.com/VU-ASE/roverrtc/src"
 	"github.com/pion/webrtc/v4"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/rs/zerolog/log"
 )
 
-// Used to debug connection state changes
+// Clean up and exit if the connection closes
 func onConnectionStateChange(conn *rtc.RTC) func(webrtc.PeerConnectionState) {
 	log := conn.Log()
 
@@ -28,26 +27,20 @@ func onConnectionStateChange(conn *rtc.RTC) func(webrtc.PeerConnectionState) {
 	}
 }
 
-// Fetch the (PS4) controller data from the server and forward it to the actuator directly
-func onControllerData(controllerData *pb_module_outputs.ControllerOutput, publisherQueue publisher.ControllerQueue) {
-	// now send it off to the actuator by publishing it
-	publisherQueue <- controllerData
+// Distribute new tuning parameters to all services, by publishing them to our tuning channel on which the other services are listening
+func onTuningStateReceived(t *pb_tuning.TuningState, appState *state.AppState) {
+	log.Debug().Str("tuning", t.String()).Msg("Received a new tuning state")
 
-	log.Debug().Float32("steeringAngle", controllerData.SteeringAngle).Float32("leftThrottle", controllerData.LeftThrottle).Float32("rightThrottle", controllerData.RightThrottle).Bool("frontLights", controllerData.FrontLights).Msg("Sent controller data to actuator")
-}
-
-// If a tuning state change came in from the server
-func onTuningStateUpdate(tuningState *pb_core_messages.TuningState) {
-	log.Debug().Str("newState", tuningState.String()).Msg("Tuning state changed")
-
-	// Send the tuning state to the system manager, which will broadcast it to all modules
-	message := pb_core_messages.CoreMessage{
-		Msg: &pb_core_messages.CoreMessage_TuningState{
-			TuningState: tuningState,
-		},
-	}
-	_, err := servicerunner.SendRequestToCore(&message)
+	// Create bytes from the tuning state
+	tuning, err := proto.Marshal(t)
 	if err != nil {
-		log.Err(err).Msg("Error sending tuning state to system manager")
+		log.Err(err).Msg("Could not marshal tuning state")
+		return
+	}
+
+	// Send the tuning state to the tuning output stream
+	err = appState.TuningOutputStream.WriteBytes(tuning)
+	if err != nil {
+		log.Err(err).Msg("Could not write tuning state to output stream")
 	}
 }

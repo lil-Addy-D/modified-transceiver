@@ -4,35 +4,39 @@ import (
 	"fmt"
 	"os"
 	livestreamconfig "vu/ase/transceiver/src/config"
-	"vu/ase/transceiver/src/publisher"
 	"vu/ase/transceiver/src/serverconnection"
 	"vu/ase/transceiver/src/state"
 	"vu/ase/transceiver/src/stream"
 
-	pb_core_messages "github.com/VU-ASE/rovercom/packages/go/core"
-	pb_module_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
+	roverlib "github.com/VU-ASE/roverlib-go/src"
 
 	"github.com/rs/zerolog/log"
-
-	roverlib "github.com/VU-ASE/roverlib/src"
 )
 
 // The actual program
-func run(service roverlib.ResolvedService, sysmanInfo roverlib.CoreInfo, tuningState *pb_core_messages.TuningState) error {
+func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error {
+	if config == nil {
+		return fmt.Errorf("No configuration was provided. Do not know how to proceed")
+	}
+
 	// Get server address from service.yaml
-	serverAddr, err := roverlib.GetTuningString("forwardingserver-address", tuningState)
+	serverAddr, err := config.GetStringSafe("passthrough-address")
 	if err != nil {
-		return fmt.Errorf("Could not fetch forwarding server address: %v", err)
+		return fmt.Errorf("Could not fetch passthrough server address: %v", err)
 	}
 
-	// Create channels for inter-goroutine communication
-	controllerPublisherQueue := make(chan *pb_module_outputs.ControllerOutput)
-	// Add everything in state, to pass around easily
-	state := state.ProcessState{
-		ControllerPublisherQueue: controllerPublisherQueue,
+	// Get the address to output newly received tuning states to
+	tuningOutput := service.GetWriteStream("tuning")
+	if tuningOutput == nil {
+		return fmt.Errorf("Could not fetch tuning output address")
 	}
 
-	// Start up the server
+	// Can be accessed by all functions
+	state := state.AppState{
+		TuningOutputStream: tuningOutput,
+	}
+
+	// Initialize connection with the pass-through server
 	server, err := serverconnection.New(serverAddr, livestreamconfig.CarId, &state)
 	if err != nil {
 		return err
@@ -41,16 +45,8 @@ func run(service roverlib.ResolvedService, sysmanInfo roverlib.CoreInfo, tuningS
 	// Start the stream
 	errorChan := make(chan error)
 	go func() {
-		errorChan <- stream.Stream(server, service, sysmanInfo)
+		errorChan <- stream.Stream(server, service)
 	}()
-
-	// Start up the publisher for the controller output
-	outputAddress, err := service.GetOutputAddress("decision")
-	if err == nil {
-		go publisher.StartControllerPublisher(outputAddress, controllerPublisherQueue)
-	} else {
-		log.Warn().Err(err).Msg("Controller publisher was not started")
-	}
 
 	// We quit on error
 	err = <-errorChan
@@ -61,15 +57,12 @@ func run(service roverlib.ResolvedService, sysmanInfo roverlib.CoreInfo, tuningS
 	return nil
 }
 
-func onTuningState(tuningState *pb_core_messages.TuningState) {
-	// do nothing for now
+// Cleanup on termination
+func onTerminate(sig os.Signal) error {
+	return nil
 }
 
-func onTerminate(sig os.Signal) {
-	// do nothing for now
-}
-
-// Used to start the program with the correct arguments
+// Start using roverlib
 func main() {
-	roverlib.Run(run, onTuningState, onTerminate, false)
+	roverlib.Run(run, onTerminate)
 }

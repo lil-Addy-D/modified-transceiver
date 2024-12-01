@@ -21,7 +21,7 @@ type EndpointError struct {
 	Message string `json:"message"`
 }
 
-func New(serverAddress string, clientId string, processState *state.ProcessState) (*rtc.RTC, error) {
+func New(serverAddress string, clientId string, state *state.AppState) (*rtc.RTC, error) {
 	conn := rtc.NewRTC(clientId)
 
 	// Create a new RTCPeerConnection
@@ -42,55 +42,57 @@ func New(serverAddress string, clientId string, processState *state.ProcessState
 		conn.Candidates = append(conn.Candidates, c.ToJSON())
 	})
 
-	// Create the required data channels (meta, control, frame)
+	//
+	// Create communication channels
+	//
+
+	// - Control channel
 	controlChan, err := peerConnection.CreateDataChannel(livestreamconfig.ControlChannelLabel, nil)
 	if err != nil {
 		return nil, err
 	}
 	conn.ControlChannel = controlChan
-	registerControlDatachannel(controlChan, processState)
-	metaChan, err := peerConnection.CreateDataChannel(livestreamconfig.MetaChannelLabel, nil)
+	registerControlChannel(controlChan)
+	// - Data channel
+	dataChan, err := peerConnection.CreateDataChannel(livestreamconfig.DataChannelLabel, nil)
 	if err != nil {
 		return nil, err
 	}
-	conn.MetaChannel = metaChan
-	registerMetaDatachannel(metaChan)
-	frameChan, err := peerConnection.CreateDataChannel(livestreamconfig.FrameChannelLabel, nil)
-	if err != nil {
-		return nil, err
-	}
-	conn.FrameChannel = frameChan
-	registerFrameDatachannel(frameChan)
+	conn.DataChannel = dataChan
+	registerDataChannel(dataChan, state)
 
-	// Set handler for connection/disconnection state changes
+	//
+	// Prepare webRTC connection and offer
+	//
+
+	// Catch changes in the connection state
 	peerConnection.OnConnectionStateChange(onConnectionStateChange(conn))
 
-	// Create an offer to send to the other process
+	// WebRTC offer to the server
 	offer, err := peerConnection.CreateOffer(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create channel that is blocked until ICE Gathering is complete
+	// Create channel to block until ICE Gathering is complete
 	gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
 
 	// Sets the LocalDescription, and starts our UDP listeners
 	// note: this will start the gathering of ICE candidates
 	if err = peerConnection.SetLocalDescription(offer); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Block until ICE Gathering is complete, disabling trickle ICE
 	<-gatherComplete
 	log.Info().Msg("ICE gathering complete")
-
 	request := rtc.RequestSDP{
 		Offer:     offer,
 		Id:        clientId,
 		Timestamp: time.Now().UnixMilli(),
 	}
 
-	// Send our offer to the signaling server
+	// Send our offer
 	payload, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
@@ -124,10 +126,14 @@ func New(serverAddress string, clientId string, processState *state.ProcessState
 		panic(err)
 	}
 
+	//
+	// Send all ICE candidates to the server
+	//
+
 	conn.CandidatesLock.Lock()
 	defer conn.CandidatesLock.Unlock()
 
-	// Send all the ICE candidates we received to the server
+	// Send all the ICE candidates we received
 	for _, iceCandidate := range conn.Candidates {
 		request := rtc.RequestICE{
 			Candidate: iceCandidate,

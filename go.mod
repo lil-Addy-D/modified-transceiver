@@ -3,9 +3,8 @@ module vu/ase/transceiver
 go 1.22.0
 
 require (
-	github.com/VU-ASE/rovercom v1.0.2
-	github.com/VU-ASE/roverlib v1.0.3
-	github.com/VU-ASE/roverrtc v1.0.2
+	github.com/VU-ASE/rovercom v1.2.1
+	github.com/VU-ASE/roverrtc v1.2.0
 	github.com/pebbe/zmq4 v1.2.11
 	github.com/pion/webrtc/v4 v4.0.0-beta.26
 	github.com/rs/zerolog v1.33.0
@@ -13,6 +12,7 @@ require (
 )
 
 require (
+	github.com/VU-ASE/roverlib-go v1.1.2 // indirect
 	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
