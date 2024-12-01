@@ -8,10 +8,14 @@ import (
 	"vu/ase/transceiver/src/stream"
 
 	roverlib "github.com/VU-ASE/roverlib-go/src"
+	rtc "github.com/VU-ASE/roverrtc/src"
 	"github.com/pion/webrtc/v4"
 
 	"github.com/rs/zerolog/log"
 )
+
+// Global value that we can use to clean up on termination
+var server *rtc.RTC
 
 // The actual program
 func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error {
@@ -71,7 +75,7 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 	}
 
 	// Initialize connection with the pass-through server
-	server, err := serverconnection.New(&state)
+	server, err = serverconnection.New(&state)
 	if err != nil {
 		return err
 	}
@@ -93,6 +97,10 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 
 // Cleanup on termination
 func onTerminate(sig os.Signal) error {
+	if server != nil {
+		log.Info().Msg("Destroying server connection")
+		server.Destroy()
+	}
 	return nil
 }
 

@@ -71,18 +71,48 @@ func Stream(server *rtc.RTC, service roverlib.Service) error {
 
 	// Monotonically increasing packet ID
 	var packetId int64 = 0
+	// Counter to use for sending a heartbeat
+	var unsentIterations int64 = 0
 
 	// Main sending loop: try to read from all dependencies and send the messages fetched to the server
 	for {
 		packetId++
+
+		// Send a heartbeat if there are no services to read from for a while
+		if unsentIterations >= 100000 {
+			log.Info().Msg("Sending heartbeat ❤️")
+			// Wrap it in so that the receiver knows which service the bytes come from
+			wrappedMsg := &pb_debug.DebugOutput{
+				Service:  &pb_debug.ServiceIdentifier{Name: "heartbeat"},
+				Endpoint: &pb_debug.ServiceEndpoint{Name: "heartbeat"},
+				Message:  []byte("heartbeat"),
+				SentAt:   time.Now().UnixMilli(),
+			}
+			msg, err := proto.Marshal(wrappedMsg)
+			if err != nil {
+				log.Err(err).Msg("Could not marshal debug message wrapper")
+				continue
+			}
+
+			// Send it off to the server
+			err = SegmentAndSendData(server, msg, packetId)
+			if err != nil {
+				log.Err(err).Msg("Could not send heartbeat message to server")
+			}
+			unsentIterations = 0
+			continue
+		}
+
 		for i := range streamList {
 			stream := &streamList[i] // need to use index-based access to avoid copying the struct with lock
 
 			// Non-blocking receive
 			output, err := stream.Socket().RecvBytes(zmq.DONTWAIT)
 			if err != nil {
+				// log.Debug().Err(err).Str("service", stream.Service.Name).Str("address", stream.Stream.Address).Msg("Could not receive service output")
 				// todo: check for EAGAIN (no message available yet, try again later), so that we can print actual errors
 				// log.Err(err).Str("service", service.serviceIdentifier.Name).Str("address", endpoint.endpoint.Address).Msg("Could not receive module output")
+				unsentIterations++
 				continue
 			}
 
@@ -110,7 +140,8 @@ func Stream(server *rtc.RTC, service roverlib.Service) error {
 
 func SegmentAndSendData(server *rtc.RTC, msg []byte, packetId int64) error {
 	segments := segmentation.SegmentBuffer(msg, packetId)
-	for _, seg := range segments {
+	for i, seg := range segments {
+		log.Debug().Msgf("Sending segment %d for packet %d", i, packetId)
 		err := server.SendDataBytes(seg)
 		if err != nil {
 			return err

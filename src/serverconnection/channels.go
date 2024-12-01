@@ -3,6 +3,7 @@ package serverconnection
 import (
 	"vu/ase/transceiver/src/state"
 
+	pb_control "github.com/VU-ASE/rovercom/packages/go/control"
 	pb_tuning "github.com/VU-ASE/rovercom/packages/go/tuning"
 	"google.golang.org/protobuf/proto"
 
@@ -26,12 +27,13 @@ func registerControlChannel(dc *webrtc.DataChannel) {
 	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 		log.Debug().Msg("Received control message from server")
 
-		//
-		// ...
-		// message handling code
-		// ...
-		//
-
+		// Try to parse as error
+		ctlErr := &pb_control.ControlError{}
+		err := proto.Unmarshal(msg.Data, ctlErr)
+		if err == nil && ctlErr.Message != "" {
+			log.Error().Msgf("Received server control error: %s", ctlErr.Message)
+			return
+		}
 	})
 }
 
