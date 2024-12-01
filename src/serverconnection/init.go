@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"time"
-	livestreamconfig "vu/ase/transceiver/src/config"
 	"vu/ase/transceiver/src/state"
 
 	rtc "github.com/VU-ASE/roverrtc/src"
@@ -21,11 +20,11 @@ type EndpointError struct {
 	Message string `json:"message"`
 }
 
-func New(serverAddress string, clientId string, state *state.AppState) (*rtc.RTC, error) {
-	conn := rtc.NewRTC(clientId)
+func New(state *state.AppState) (*rtc.RTC, error) {
+	conn := rtc.NewRTC(state.ConnectionIdentifier)
 
 	// Create a new RTCPeerConnection
-	peerConnection, err := webrtc.NewPeerConnection(livestreamconfig.PeerConnectionConfig)
+	peerConnection, err := webrtc.NewPeerConnection(state.PeerConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -47,14 +46,14 @@ func New(serverAddress string, clientId string, state *state.AppState) (*rtc.RTC
 	//
 
 	// - Control channel
-	controlChan, err := peerConnection.CreateDataChannel(livestreamconfig.ControlChannelLabel, nil)
+	controlChan, err := peerConnection.CreateDataChannel(state.ControlChannelLabel, nil)
 	if err != nil {
 		return nil, err
 	}
 	conn.ControlChannel = controlChan
 	registerControlChannel(controlChan)
 	// - Data channel
-	dataChan, err := peerConnection.CreateDataChannel(livestreamconfig.DataChannelLabel, nil)
+	dataChan, err := peerConnection.CreateDataChannel(state.DataChannelLabel, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +87,7 @@ func New(serverAddress string, clientId string, state *state.AppState) (*rtc.RTC
 	log.Info().Msg("ICE gathering complete")
 	request := rtc.RequestSDP{
 		Offer:     offer,
-		Id:        clientId,
+		Id:        state.ConnectionIdentifier,
 		Timestamp: time.Now().UnixMilli(),
 	}
 
@@ -97,7 +96,7 @@ func New(serverAddress string, clientId string, state *state.AppState) (*rtc.RTC
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.Post(fmt.Sprintf("%s/car/sdp", serverAddress), "application/json; charset=utf-8", bytes.NewReader(payload)) // nolint:noctx
+	resp, err := http.Post(fmt.Sprintf("%s/car/sdp", state.ServerAddress), "application/json; charset=utf-8", bytes.NewReader(payload)) // nolint:noctx
 	if err != nil {
 		return nil, err
 	}
@@ -137,14 +136,14 @@ func New(serverAddress string, clientId string, state *state.AppState) (*rtc.RTC
 	for _, iceCandidate := range conn.Candidates {
 		request := rtc.RequestICE{
 			Candidate: iceCandidate,
-			Id:        clientId,
+			Id:        state.ConnectionIdentifier,
 		}
 
 		payload, err := json.Marshal(request)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := http.Post(fmt.Sprintf("%s/car/ice", serverAddress), "application/json; charset=utf-8", bytes.NewReader(payload)) // nolint:noctx
+		resp, err := http.Post(fmt.Sprintf("%s/car/ice", state.ServerAddress), "application/json; charset=utf-8", bytes.NewReader(payload)) // nolint:noctx
 		if err != nil {
 			return nil, err
 		}

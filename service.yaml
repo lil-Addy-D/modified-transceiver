@@ -14,5 +14,14 @@ outputs:
   - tuning # outputs all tuning messages received from the passthrough service, so that other services can listen and use them
 
 configuration:
-  - name: passthrough-address # address of the passthrough service
+  - name: passthrough-address # address of the passthrough server to connect to
     value: localhost:8080
+  - name: connection-identifier # this is how we will identify ourselves to the passthrough server
+    value: car
+  - name: data-channel-label # label for the data channel (passthrough server should use the same label)
+    value: data
+  - name: control-channel-label # label for the control channel (passthrough server should use the same label)
+    value: control
+  - name: use-wan # whether to use the WAN or not. Enabling this when passthrough server is accessed on LAN will break the connection
+    value: 0
+    type: int
