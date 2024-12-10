@@ -5,6 +5,8 @@ import (
 	"vu/ase/transceiver/src/segmentation"
 
 	pb_debug "github.com/VU-ASE/rovercom/packages/go/debug"
+	pb_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
+
 	roverlib "github.com/VU-ASE/roverlib-go/src"
 	rtc "github.com/VU-ASE/roverrtc/src"
 	zmq "github.com/pebbe/zmq4"
@@ -71,36 +73,53 @@ func Stream(server *rtc.RTC, service roverlib.Service) error {
 
 	// Monotonically increasing packet ID
 	var packetId int64 = 0
-	// Counter to use for sending a heartbeat
-	var unsentIterations int64 = 0
 
 	// Main sending loop: try to read from all dependencies and send the messages fetched to the server
 	for {
 		packetId++
 
-		// Send a heartbeat if there are no services to read from for a while
-		if unsentIterations >= 100000 {
-			log.Info().Msg("Sending heartbeat ❤️")
-			// Wrap it in so that the receiver knows which service the bytes come from
-			wrappedMsg := &pb_debug.DebugOutput{
-				Service:  &pb_debug.ServiceIdentifier{Name: "heartbeat"},
-				Endpoint: &pb_debug.ServiceEndpoint{Name: "heartbeat"},
-				Message:  []byte("heartbeat"),
+		// Send dummy data
+		if packetId%5000 < 10 {
+
+			dummyCore := &pb_outputs.SensorOutput{
+				SensorId:  1234,
+				Timestamp: uint64(time.Now().UnixMilli()),
+				Status:    0,
+				SensorOutput: &pb_outputs.SensorOutput_DistanceOutput{
+					DistanceOutput: &pb_outputs.DistanceSensorOutput{
+						Distance: float32(packetId % 100),
+					},
+				},
+			}
+
+			// Marshal
+			dummyData, err := proto.Marshal(dummyCore)
+			if err != nil {
+				log.Err(err).Msg("Could not marshal dummy data")
+				continue
+			}
+
+			dummyWrap := &pb_debug.DebugOutput{
+				Service:  &pb_debug.ServiceIdentifier{Name: "dummy", Pid: -1},
+				Endpoint: &pb_debug.ServiceEndpoint{Name: "dummy", Address: "dummy"},
+				Message:  dummyData,
 				SentAt:   time.Now().UnixMilli(),
 			}
-			msg, err := proto.Marshal(wrappedMsg)
+
+			// Marshal
+			dummyMsg, err := proto.Marshal(dummyWrap)
 			if err != nil {
-				log.Err(err).Msg("Could not marshal debug message wrapper")
+				log.Err(err).Msg("Could not marshal dummy message")
 				continue
 			}
 
 			// Send it off to the server
-			err = SegmentAndSendData(server, msg, packetId)
+			err = SegmentAndSendData(server, dummyMsg, packetId)
 			if err != nil {
-				log.Err(err).Msg("Could not send heartbeat message to server")
+				log.Err(err).Msg("Could not send dummy message to server")
 			}
-			unsentIterations = 0
-			continue
+
+			packetId++
 		}
 
 		for i := range streamList {
@@ -112,7 +131,6 @@ func Stream(server *rtc.RTC, service roverlib.Service) error {
 				// log.Debug().Err(err).Str("service", stream.Service.Name).Str("address", stream.Stream.Address).Msg("Could not receive service output")
 				// todo: check for EAGAIN (no message available yet, try again later), so that we can print actual errors
 				// log.Err(err).Str("service", service.serviceIdentifier.Name).Str("address", endpoint.endpoint.Address).Msg("Could not receive module output")
-				unsentIterations++
 				continue
 			}
 
