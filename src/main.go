@@ -58,9 +58,9 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 	}
 
 	// Get the address to output newly received tuning states to
-	tuningOutput := service.GetWriteStream("tuning")
+	tuningOutput := service.GetWriteStream("transceiver")
 	if tuningOutput == nil {
-		return fmt.Errorf("Could not fetch tuning output address")
+		return fmt.Errorf("Could not fetch transceiver output address")
 	}
 
 	// Can be accessed by all functions
