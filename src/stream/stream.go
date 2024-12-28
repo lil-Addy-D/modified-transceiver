@@ -5,7 +5,6 @@ import (
 	"vu/ase/transceiver/src/segmentation"
 
 	pb_debug "github.com/VU-ASE/rovercom/packages/go/debug"
-	pb_outputs "github.com/VU-ASE/rovercom/packages/go/outputs"
 
 	roverlib "github.com/VU-ASE/roverlib-go/src"
 	rtc "github.com/VU-ASE/roverrtc/src"
@@ -78,57 +77,59 @@ func Stream(server *rtc.RTC, service roverlib.Service) error {
 	for {
 		packetId++
 
-		// Send dummy data
-		if packetId%5000 < 10 {
+		// // Send dummy data
+		// if packetId%5000 < 10 {
 
-			dummyCore := &pb_outputs.SensorOutput{
-				SensorId:  1234,
-				Timestamp: uint64(time.Now().UnixMilli()),
-				Status:    0,
-				SensorOutput: &pb_outputs.SensorOutput_DistanceOutput{
-					DistanceOutput: &pb_outputs.DistanceSensorOutput{
-						Distance: float32(packetId % 100),
-					},
-				},
-			}
+		// 	dummyCore := &pb_outputs.SensorOutput{
+		// 		SensorId:  1234,
+		// 		Timestamp: uint64(time.Now().UnixMilli()),
+		// 		Status:    0,
+		// 		SensorOutput: &pb_outputs.SensorOutput_DistanceOutput{
+		// 			DistanceOutput: &pb_outputs.DistanceSensorOutput{
+		// 				Distance: float32(packetId % 100),
+		// 			},
+		// 		},
+		// 	}
 
-			// Marshal
-			dummyData, err := proto.Marshal(dummyCore)
-			if err != nil {
-				log.Err(err).Msg("Could not marshal dummy data")
-				continue
-			}
+		// 	// Marshal
+		// 	dummyData, err := proto.Marshal(dummyCore)
+		// 	if err != nil {
+		// 		log.Err(err).Msg("Could not marshal dummy data")
+		// 		continue
+		// 	}
 
-			dummyWrap := &pb_debug.DebugOutput{
-				Service:  &pb_debug.ServiceIdentifier{Name: "dummy", Pid: -1},
-				Endpoint: &pb_debug.ServiceEndpoint{Name: "dummy", Address: "dummy"},
-				Message:  dummyData,
-				SentAt:   time.Now().UnixMilli(),
-			}
+		// 	dummyWrap := &pb_debug.DebugOutput{
+		// 		Service:  &pb_debug.ServiceIdentifier{Name: "dummy", Pid: -1},
+		// 		Endpoint: &pb_debug.ServiceEndpoint{Name: "dummy", Address: "dummy"},
+		// 		Message:  dummyData,
+		// 		SentAt:   time.Now().UnixMilli(),
+		// 	}
 
-			// Marshal
-			dummyMsg, err := proto.Marshal(dummyWrap)
-			if err != nil {
-				log.Err(err).Msg("Could not marshal dummy message")
-				continue
-			}
+		// 	// Marshal
+		// 	dummyMsg, err := proto.Marshal(dummyWrap)
+		// 	if err != nil {
+		// 		log.Err(err).Msg("Could not marshal dummy message")
+		// 		continue
+		// 	}
 
-			// Send it off to the server
-			err = SegmentAndSendData(server, dummyMsg, packetId)
-			if err != nil {
-				log.Err(err).Msg("Could not send dummy message to server")
-			}
+		// 	// Send it off to the server
+		// 	err = SegmentAndSendData(server, dummyMsg, packetId)
+		// 	if err != nil {
+		// 		log.Err(err).Msg("Could not send dummy message to server")
+		// 	}
 
-			packetId++
-		}
+		// 	packetId++
+		// }
 
 		for i := range streamList {
 			stream := &streamList[i] // need to use index-based access to avoid copying the struct with lock
 
+			log.Debug().Str("service", stream.Service.Name).Str("address", stream.Stream.Address).Msg("Receiving service output")
+
 			// Non-blocking receive
 			output, err := stream.Socket().RecvBytes(zmq.DONTWAIT)
 			if err != nil {
-				// log.Debug().Err(err).Str("service", stream.Service.Name).Str("address", stream.Stream.Address).Msg("Could not receive service output")
+				log.Debug().Err(err).Str("service", stream.Service.Name).Str("address", stream.Stream.Address).Msg("Could not receive service output")
 				// todo: check for EAGAIN (no message available yet, try again later), so that we can print actual errors
 				// log.Err(err).Str("service", service.serviceIdentifier.Name).Str("address", endpoint.endpoint.Address).Msg("Could not receive module output")
 				continue
