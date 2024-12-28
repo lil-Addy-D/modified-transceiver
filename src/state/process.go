@@ -13,6 +13,6 @@ type AppState struct {
 	ConnectionIdentifier string
 	DataChannelLabel     string
 	ControlChannelLabel  string
-	UseWan               int
+	UseWan               float64
 	PeerConfig           webrtc.Configuration
 }

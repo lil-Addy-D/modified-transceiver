@@ -40,7 +40,7 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 	if err != nil {
 		return fmt.Errorf("Could not fetch control channel label: %v", err)
 	}
-	useWan, err := config.GetIntSafe("use-wan") // if this is 1, we will use external ICE servers to open a connection
+	useWan, err := config.GetFloatSafe("use-wan") // if this is 1, we will use external ICE servers to open a connection
 	if err != nil {
 		return fmt.Errorf("Could not fetch use-wan: %v", err)
 	}
