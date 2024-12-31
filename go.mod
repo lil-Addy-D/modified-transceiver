@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/VU-ASE/rovercom v1.5.1
-	github.com/VU-ASE/roverlib-go v1.2.0
+	github.com/VU-ASE/roverlib-go v1.2.2
 	github.com/VU-ASE/roverrtc v1.2.0
 	github.com/pebbe/zmq4 v1.2.11
 	github.com/pion/webrtc/v4 v4.0.0-beta.26

@@ -16,6 +16,10 @@ github.com/VU-ASE/roverlib-go v1.1.6 h1:tWoK+4djjaQBzRswcKtGTiboEXlZUjoImFlYVQ+v
 github.com/VU-ASE/roverlib-go v1.1.6/go.mod h1:VDt5Rl941QkBKXQ9i3+P4kDrJmzC9VhkDQ5pe1FuBBs=
 github.com/VU-ASE/roverlib-go v1.2.0 h1:52fEzJAExaWqOLy0meBmAExWBEOnrxAsIzQK0ErdM3k=
 github.com/VU-ASE/roverlib-go v1.2.0/go.mod h1:wCre2f0pgcCOjM+9HPNdWxqF/ZsS/EgEyy6bJWjXjW0=
+github.com/VU-ASE/roverlib-go v1.2.1 h1:n0VUtCDvSry20lkwmoIf9odnkuR7rsY7//yiWO/eDV8=
+github.com/VU-ASE/roverlib-go v1.2.1/go.mod h1:wCre2f0pgcCOjM+9HPNdWxqF/ZsS/EgEyy6bJWjXjW0=
+github.com/VU-ASE/roverlib-go v1.2.2 h1:DNhMEaESsY7pxOsKodG7BeBh3YKw7FKY6Cv+9eym2NI=
+github.com/VU-ASE/roverlib-go v1.2.2/go.mod h1:wCre2f0pgcCOjM+9HPNdWxqF/ZsS/EgEyy6bJWjXjW0=
 github.com/VU-ASE/roverrtc v1.2.0 h1:IPOQwWUeBjkUVHsnaJmOhPlV9jyz9GGfMnM15PFvDWo=
 github.com/VU-ASE/roverrtc v1.2.0/go.mod h1:J7rhlXX7fompQBiYcJEUI55ErDf+9TxwGgNJQWJ6HfE=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
