@@ -74,6 +74,15 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 		PeerConfig:           peerConfig,
 	}
 
+	log.Info().Msg("Starting transceiver with inputs:")
+	for _, input := range service.Inputs {
+		log.Info().Msgf("  - %s at address", *input.Service)
+		for _, stream := range input.Streams {
+			log.Info().Msgf("         - %s at %s", *stream.Name, *stream.Address)
+		}
+	}
+	log.Info().Msgf("There are %d inputs in total for this service", len(service.Inputs))
+
 	// Initialize connection with the pass-through server
 	server, err = serverconnection.New(&state)
 	if err != nil {

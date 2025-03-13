@@ -36,7 +36,7 @@ func (s *inputStream) Socket() *zmq.Socket {
 	// Connect to the endpoint
 	err = socket.Connect(s.Stream.Address)
 	if err != nil {
-		log.Err(err).Msgf("Could not connect to service '%s' stream '%s'", s.Service.Name, s.Stream.Name)
+		log.Err(err).Msgf("Could not connect to service '%s' stream at address %s '%s'", s.Service.Name, s.Stream.Address, s.Stream.Name)
 		return nil
 	}
 
