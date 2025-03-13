@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/VU-ASE/transceiver/compare/v1.1.0...v1.2.0) (2025-03-13)
+
+
+### Features
+
+* show more helpful debugging information ([c406581](https://github.com/VU-ASE/transceiver/commit/c406581fc87570a4368845190c4bf8114907f972))
+
 ## [1.1.0](https://github.com/VU-ASE/transceiver/compare/v1.0.1...v1.1.0) (2024-12-31)
 
 
