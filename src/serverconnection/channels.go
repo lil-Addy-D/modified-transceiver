@@ -43,6 +43,20 @@ func registerDataChannel(dc *webrtc.DataChannel, state *state.AppState) {
 		log.Info().Str("label", dc.Label()).Msg("Data channel was opened for communication")
 	})
 
+	TuningState test = &pb_tuning.TuningState{
+		Timestamp: 1,
+		DynamicParameters: []*pb_tuning.TuningState_Parameter{
+			{
+				Parameter: &pb_tuning.TuningState_Parameter_NumberParameter{
+					Key:   "speed",
+					Value: 0.5,
+				},
+			},
+		},
+	}
+
+	onTuningStateReceived(test, state)
+
 	// Register message handling
 	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 		log.Debug().Msg("Received data message from server")
