@@ -56,7 +56,8 @@ func registerDataChannel(dc *webrtc.DataChannel, state *state.AppState) {
 		}
 
 		if tuning.Timestamp != 0 {
-			onTuningStateReceived(tuning, state)
+			OnTuningStateReceived(tuning, state)
 		}
 	})
+	//read stdin and act on input?
 }

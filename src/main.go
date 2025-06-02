@@ -3,25 +3,30 @@ package main
 import (
 	"fmt"
 	"os"
+	//"strings"
+	"flag"
 	"vu/ase/transceiver/src/serverconnection"
 	"vu/ase/transceiver/src/state"
 	"vu/ase/transceiver/src/stream"
-
 	roverlib "github.com/VU-ASE/roverlib-go/src"
 	rtc "github.com/VU-ASE/roverrtc/src"
 	"github.com/pion/webrtc/v4"
 
 	"github.com/rs/zerolog/log"
+	pb_tuning "github.com/VU-ASE/rovercom/packages/go/tuning"
+
 )
 
 // Global value that we can use to clean up on termination
 var server *rtc.RTC
+var isFuzzing = flag.Bool("fuzz", false, "Enable fuzzing mode")	
 
 // The actual program
 func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error {
 	if config == nil {
 		return fmt.Errorf("No configuration was provided. Do not know how to proceed")
 	}
+	
 
 	// Get all configuration from our service.yaml
 	serverAddr, err := config.GetStringSafe("passthrough-address") // we are going to connect to this address
@@ -94,6 +99,26 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 	go func() {
 		errorChan <- stream.Stream(server, service)
 	}()
+
+	if *isFuzzing {
+	log.Info().Msg("Fuzzing mode enabled, not waiting for server connection")
+
+	tuning := &pb_tuning.TuningState{
+		Timestamp: 1747930213558,
+		DynamicParameters: []*pb_tuning.TuningState_Parameter{
+			{
+				Parameter: &pb_tuning.TuningState_Parameter_Number{
+					Number: &pb_tuning.TuningState_Parameter_NumberParameter{
+						Key:   "speed",
+						Value: 0.5,
+					},
+				},
+			},
+		},
+	}
+
+	serverconnection.OnTuningStateReceived(tuning, &state)
+}
 
 	// We quit on error
 	err = <-errorChan
