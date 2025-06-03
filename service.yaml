@@ -15,7 +15,7 @@ outputs:
 
 configuration:
   - name: passthrough-address # address of the passthrough server to connect to
-    value: http://192.168.0.115:7500
+    value: http://192.168.0.180:7500
     type: string
   - name: connection-identifier # this is how we will identify ourselves to the passthrough server
     value: car
