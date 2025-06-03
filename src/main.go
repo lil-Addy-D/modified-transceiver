@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	//"strings"
+	"time"
 	"flag"
 	"vu/ase/transceiver/src/serverconnection"
 	"vu/ase/transceiver/src/state"
@@ -102,7 +103,7 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 
 	if *isFuzzing {
 	log.Info().Msg("Fuzzing mode enabled, not waiting for server connection")
-
+	time.Sleep(3 * time.Second)
 	tuning := &pb_tuning.TuningState{
 		Timestamp: 1747930213558,
 		DynamicParameters: []*pb_tuning.TuningState_Parameter{

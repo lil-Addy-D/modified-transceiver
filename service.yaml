@@ -6,7 +6,7 @@ version: 1.0.0
 
 commands:
   build: make build 
-  run: ./bin/transceiver --fuzz
+  run: ./bin/transceiver -fuzz=true
 
 # No 'official' dependencies, but the transceiver listens to all streams from all services
 inputs: []
