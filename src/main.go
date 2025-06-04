@@ -2,32 +2,35 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"net"
 	"os"
+
 	//"strings"
-	"time"
 	"flag"
+	"time"
 	"vu/ase/transceiver/src/serverconnection"
 	"vu/ase/transceiver/src/state"
 	"vu/ase/transceiver/src/stream"
+
 	roverlib "github.com/VU-ASE/roverlib-go/src"
 	rtc "github.com/VU-ASE/roverrtc/src"
 	"github.com/pion/webrtc/v4"
 
-	"github.com/rs/zerolog/log"
 	pb_tuning "github.com/VU-ASE/rovercom/packages/go/tuning"
-
+	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 // Global value that we can use to clean up on termination
 var server *rtc.RTC
-var isFuzzing = flag.Bool("fuzz", false, "Enable fuzzing mode")	
+var isFuzzing = flag.Bool("fuzz", false, "Enable fuzzing mode")
 
 // The actual program
 func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error {
 	if config == nil {
 		return fmt.Errorf("No configuration was provided. Do not know how to proceed")
 	}
-	
 
 	// Get all configuration from our service.yaml
 	serverAddr, err := config.GetStringSafe("passthrough-address") // we are going to connect to this address
@@ -99,27 +102,58 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 	errorChan := make(chan error)
 	go func() {
 		errorChan <- stream.Stream(server, service)
+
 	}()
 
 	if *isFuzzing {
-	log.Info().Msg("Fuzzing mode enabled, not waiting for server connection")
-	time.Sleep(3 * time.Second)
-	tuning := &pb_tuning.TuningState{
-		Timestamp: 1747930213558,
-		DynamicParameters: []*pb_tuning.TuningState_Parameter{
-			{
-				Parameter: &pb_tuning.TuningState_Parameter_Number{
-					Number: &pb_tuning.TuningState_Parameter_NumberParameter{
-						Key:   "speed",
-						Value: 0.5,
-					},
-				},
-			},
-		},
-	}
+		log.Info().Msg("Fuzzing mode enabled")
 
-	serverconnection.OnTuningStateReceived(tuning, &state)
-}
+		// SITAS FOR LOOPAS KAD TIPO GAUTUME SOCKET TEISINGA ADRESA, KITAIP SOCKETO NEASSIGNINA ISKART
+		for i := 0; i < 10; i++ {
+			err := state.TuningOutputStream.WriteBytes([]byte{})
+			if err == nil {
+				log.Info().Msg("TuningOutputStream is now ready")
+				break
+			}
+			log.Warn().Err(err).Msgf("TuningOutputStream not ready, attempt %d/10", i+1)
+			time.Sleep(500 * time.Millisecond)
+		}
+		// Kai fuzzinsim, reiks gal biski sumazint printu ir pns
+		go func() {
+			listener, err := net.Listen("tcp", "0.0.0.0:9000")
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to start TCP listener for fuzzing input")
+			}
+			log.Info().Msg("Listening for fuzzing input on 0.0.0.0:9000")
+
+			for {
+				conn, err := listener.Accept()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to accept fuzzing connection")
+					continue
+				}
+
+				go func(c net.Conn) {
+					defer c.Close()
+					data, err := io.ReadAll(c)
+					if err != nil {
+						log.Error().Err(err).Msg("Failed to read tuning input")
+						return
+					}
+
+					tuning := &pb_tuning.TuningState{}
+					err = proto.Unmarshal(data, tuning)
+					if err != nil {
+						log.Error().Err(err).Msg("Failed to unmarshal tuning input")
+						return
+					}
+
+					log.Info().Str("tuning", tuning.String()).Msg("Received tuning state from harness")
+					serverconnection.OnTuningStateReceived(tuning, &state)
+				}(conn)
+			}
+		}()
+	}
 
 	// We quit on error
 	err = <-errorChan
