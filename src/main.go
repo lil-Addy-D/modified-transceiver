@@ -147,8 +147,10 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 						log.Error().Err(err).Msg("Failed to unmarshal tuning input")
 						return
 					}
-
-					log.Info().Str("tuning", tuning.String()).Msg("Received tuning state from harness")
+					if tuning.DynamicParameters[0].GetNumber().GetKey() == "crash" {
+						panic("CRASHED PURPOSELY")
+					}
+					//log.Info().Str("tuning", tuning.String()).Msg("Received tuning state from harness")
 					serverconnection.OnTuningStateReceived(tuning, &state)
 				}(conn)
 			}
