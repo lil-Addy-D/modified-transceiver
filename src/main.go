@@ -124,7 +124,6 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 			if err != nil {
 				log.Fatal().Err(err).Msg("Failed to start TCP listener for fuzzing input")
 			}
-			log.Info().Msg("Listening for fuzzing input on 0.0.0.0:9000")
 
 			for {
 				conn, err := listener.Accept()
@@ -147,6 +146,13 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 						log.Error().Err(err).Msg("Failed to unmarshal tuning input")
 						return
 					}
+
+					err = os.WriteFile("/tmp/last_input.bin", data, 0644)
+					if err != nil {
+						log.Error().Err(err).Msg("Failed to write last input to file")
+					}
+
+					log.Info().Str("tuning", tuning.String()).Msg("Received tuning state from fuzzing input")
 					if tuning.DynamicParameters[0].GetNumber().GetKey() == "crash" {
 						panic("CRASHED PURPOSELY")
 					}

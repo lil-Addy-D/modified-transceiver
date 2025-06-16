@@ -30,11 +30,6 @@ func onConnectionStateChange(conn *rtc.RTC) func(webrtc.PeerConnectionState) {
 // Distribute new tuning parameters to all services, by publishing them to our tuning channel on which the other services are listening
 func OnTuningStateReceived(t *pb_tuning.TuningState, appState *state.AppState) {
 	log.Info().Str("tuning", t.String()).Msg("Received a new tuning state")
-
-	//log.Info().Msgf("AppState pointer: %p", appState)
-	//log.Info().Msgf("TuningOutputStream: %+v", appState.TuningOutputStream)
-
-	// Create bytes from the tuning state
 	tuning, err := proto.Marshal(t)
 	if err != nil {
 		log.Err(err).Msg("Could not marshal tuning state")
