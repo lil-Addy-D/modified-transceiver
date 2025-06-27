@@ -108,7 +108,6 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 	if *isFuzzing {
 		log.Info().Msg("Fuzzing mode enabled")
 
-		// SITAS FOR LOOPAS KAD TIPO GAUTUME SOCKET TEISINGA ADRESA, KITAIP SOCKETO NEASSIGNINA ISKART
 		for i := 0; i < 10; i++ {
 			err := state.TuningOutputStream.WriteBytes([]byte{})
 			if err == nil {
@@ -118,7 +117,7 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 			log.Warn().Err(err).Msgf("TuningOutputStream not ready, attempt %d/10", i+1)
 			time.Sleep(500 * time.Millisecond)
 		}
-		// Kai fuzzinsim, reiks gal biski sumazint printu ir pns
+
 		go func() {
 			listener, err := net.Listen("tcp", "0.0.0.0:9000")
 			if err != nil {
@@ -141,22 +140,19 @@ func run(service roverlib.Service, config *roverlib.ServiceConfiguration) error 
 					}
 
 					tuning := &pb_tuning.TuningState{}
+
 					err = proto.Unmarshal(data, tuning)
 					if err != nil {
-						log.Error().Err(err).Msg("Failed to unmarshal tuning input")
+						//	log.Error().Err(err).Msg("Failed to unmarshal tuning input")
 						return
 					}
-
+					tuning.Timestamp = uint64(time.Now().UnixMilli())
 					err = os.WriteFile("/tmp/last_input.bin", data, 0644)
 					if err != nil {
 						log.Error().Err(err).Msg("Failed to write last input to file")
 					}
 
 					log.Info().Str("tuning", tuning.String()).Msg("Received tuning state from fuzzing input")
-					if tuning.DynamicParameters[0].GetNumber().GetKey() == "crash" {
-						panic("CRASHED PURPOSELY")
-					}
-					//log.Info().Str("tuning", tuning.String()).Msg("Received tuning state from harness")
 					serverconnection.OnTuningStateReceived(tuning, &state)
 				}(conn)
 			}
